@@ -1,0 +1,24 @@
+name: Netlify Continous Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+        node-version: 12
+      - run: npm ci
+      - run: npm run build
+      - uses: jsmrcaga/action-netlify-deploy@v1.1.0
+        with:
+          args: deploy --only hosting
+        env:
+          NETLIFY_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+      
+     
+    
