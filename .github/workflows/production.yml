@@ -1,44 +1,35 @@
-name: Production workflow
+name: "ci-cd pipeline"
 
-on:
+on: 
   push:
     branches:
-      - main
+    - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    - name: Install dependencies
+      run: npm install 
+    // - name: Run tests
+    // - run: npm test
+    - name: Build file
+      run: npm run build
+      
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-
-      - name: Get current branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: curr_branch
-
-      - name: Install Netlify CLI
-        run: npm install netlify-cli -g
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run lint
-        run: npm run lint
-
-      - name: Run build
-        run: npm run build
-
-      - name: Deploy to netlify
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          RUN_ID: ${{ github.run_id }}
-          CURR_BRANCH: ${{ steps.curr_branch.outputs.branch  }}
-        shell: bash
-        run: netlify deploy --dir=dist --prod --auth $NETLIFY_TOKEN --message="GitHub action deploy $RUN_ID on $CURR_BRANCH"
+    // deploy the application to netlify
+    - name: Deploy production to Netlify
+      uses: South-Paw/action-netlify-deploy@v1.2.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        netlify-site-id: ${{ secrets.NETLIFY_SITE_ID }}
+        build-dir: './build'
+        comment-on-commit: true
